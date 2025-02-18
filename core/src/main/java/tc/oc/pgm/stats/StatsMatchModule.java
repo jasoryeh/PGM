@@ -3,6 +3,7 @@ package tc.oc.pgm.stats;
 import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.Component.translatable;
+import static net.kyori.adventure.text.Component.virtual;
 import static tc.oc.pgm.util.player.PlayerComponent.player;
 import static tc.oc.pgm.util.text.NumberComponent.number;
 import static tc.oc.pgm.util.text.TextFormatter.list;
@@ -77,7 +78,6 @@ import tc.oc.pgm.tracker.TrackerMatchModule;
 import tc.oc.pgm.tracker.info.ProjectileInfo;
 import tc.oc.pgm.util.named.NameStyle;
 import tc.oc.pgm.util.player.PlayerComponent;
-import tc.oc.pgm.util.text.RenderableComponent;
 import tc.oc.pgm.util.text.TextFormatter;
 import tc.oc.pgm.util.usernames.UsernameResolvers;
 import tc.oc.pgm.wool.MonumentWool;
@@ -350,12 +350,11 @@ public class StatsMatchModule implements MatchModule, Listener {
     if (best)
       who = translatable("misc.authorship", agg.type.makeNumber(agg.value), credit(agg.players));
     if (own)
-      who = who.append((RenderableComponent) v -> {
-        if (!(v instanceof Player p)) return empty();
+      who = who.append(virtual(Player.class, p -> {
         if (agg.players.contains(p.getUniqueId()) || hasNoStats(p.getUniqueId())) return empty();
         var number = agg.type.makeNumber(getGlobalPlayerStat(p.getUniqueId()).getStat(agg.type));
         return !best ? number : text("   ").append(translatable("match.stats.you.short", number));
-      });
+      }));
     return translatable(agg.type.key, who);
   }
 
@@ -372,8 +371,7 @@ public class StatsMatchModule implements MatchModule, Listener {
 
   private Component getPlayerComponent(UUID uuid) {
     var player = player(uuid, NameStyle.VERBOSE);
-    if (player != PlayerComponent.UNKNOWN_PLAYER && player != PlayerComponent.UNKNOWN)
-      return player;
+    if (player != PlayerComponent.UNKNOWN) return player;
     return stats.column(uuid).values().stream()
         .max(Comparator.comparing(PlayerStats::getTimePlayed))
         .map(PlayerStats::getPlayerComponent)
